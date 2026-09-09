@@ -1,0 +1,75 @@
+control_id,domain,source_standard,source_requirement,applicable,asset,test_method,authorization_needed,status,evidence_reference,finding_id,limitation,reviewer_notes
+ASVS-V1-1,Encoding and Sanitization,ASVS 5.0,V1.1.1,Sim,Frontend/Output,Análise estática + revisão de código,Não,CONTROLE VALIDADO,components/ui/Input.tsx:26-28; components/ui/Button.tsx:32,--,React escapa output por padrão; dangerouslySetInnerHTML não usado
+ASVS-V1-2,Encoding and Sanitization,ASVS 5.0,V1.1.2,Sim,Frontend/Input,Análise estática,Não,CONTROLE VALIDADO,lib/cpf.ts; lib/phone.ts,--,Validação rigorosa de CPF (modulus 11) e telefone
+ASVS-V1-3,Encoding and Sanitization,ASVS 5.0,V1.1.3,Sim,API/Input,Análise estática,Não,CONTROLE VALIDADO,lib/cpf.ts:10-38; lib/phone.ts:10-34,--,Sanitização via cleanCPF/cleanPhone antes de validação
+ASVS-V2-1,Validation and Business Logic,ASVS 5.0,V2.1.1,Sim,API/Validation,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:40-55,--,Validação de campos obrigatórios no backend
+ASVS-V2-2,Validation and Business Logic,ASVS 5.0,V2.1.2,Sim,API/Validation,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:58-85,--,Validação de email, CPF (modulus 11), telefone
+ASVS-V2-3,Validation and Business Logic,ASVS 5.0,V2.1.3,Sim,Business Logic,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:108-120,--,Validação de duplicidade CPF+programa; status do programa
+ASVS-V3-1,Web Frontend Security,ASVS 5.0,V3.1.1,Sim,Frontend/XSS,Análise estática,Não,CONTROLE VALIDADO,components/ui/Input.tsx,--,React escapa por padrão; sem dangerouslySetInnerHTML
+ASVS-V3-2,Web Frontend Security,ASVS 5.0,V3.2.1,Sim,Frontend/CSP,Análise estática,Não,HIPÓTESE,next.config.mjs:18-22,--,Headers básicos presentes; CSP report-only não configurado
+ASVS-V3-3,Web Frontend Security,ASVS 5.0,V3.3.1,Sim,Frontend/CSRF,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:45-47; middleware.ts,--,SameSite=Lax; NextAuth CSRF protection
+ASVS-V3-4,Web Frontend Security,ASVS 5.0,V3.4.1,Sim,Frontend/Clickjacking,Análise estática,Não,HIPÓTESE,next.config.mjs:10-11,--,X-Frame-Options: DENY presente
+ASVS-V3-5,Web Frontend Security,ASVS 5.0,V3.5.1,Sim,Frontend/CORS,Análise estática,Não,CONTROLE VALIDADO,next.config.mjs,--,CORS não configurado explicitamente (padrão same-origin)
+ASVS-V4-1,API and Web Service,ASVS 5.0,V4.1.1,Sim,API/Auth,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:10-14,--,Autenticação obrigatória via NextAuth JWT
+ASVS-V4-2,API and Web Service,ASVS 5.0,V4.1.2,Sim,API/AuthZ,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:176-179,--,VIEWER vê apenas suas inscrições (filtro por email)
+ASVS-V4-3,API and Web Service,ASVS 5.0,V4.2.1,Sim,API/Input Validation,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:40-85,--,Validação robusta: email, CPF modulus 11, telefone
+ASVS-V4-4,API and Web Service,ASVS 5.0,V4.2.2,Sim,API/Output Encoding,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:146-158,--,JSON response; sem HTML injection
+ASVS-V4-4,API and Web Service,ASVS 5.0,V4.3.1,Sim,API/Content-Type,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:16-22,--,Content-Type validation obrigatório
+ASVS-V4-5,API and Web Service,ASVS 5.0,V4.5.1,Sim,API/AuthZ,Análise estática,Não,CONTROLE VALIDADO,app/api/cultura/route.ts:28-33,--,Role check: ADMIN/EDITOR required
+ASVS-V4-6,API and Web Service,ASVS 5.0,V4.6.1,Sim,API/Rate Limit,Análise estática,Não,PROVÁVEL,app/api/auth/register/route.ts:6-29,--,Rate limit in-memory apenas; falha em multi-instância
+ASVS-V5-1,File Handling,ASVS 5.0,V5.1.1,Não,File Upload,N/A,N/A,--,N/A
+ASVS-V6-1,Authentication,ASVS 5.0,V6.1.1,Sim,Auth/Password,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:27-30; app/api/auth/register/route.ts:84,--,bcrypt cost 12; senha mínimo 6 chars
+ASVS-V6-2,Authentication,ASVS 5.0,V6.2.1,Sim,Auth/MFA,Não,HIPÓTESE,lib/auth.ts,--,NextAuth suporta WebAuthn/FIDO2; não configurado obrigatório
+ASVS-V6-3,Authentication,ASVS 5.0,V6.3.1,Sim,Auth/Brute Force,Análise estática,Não,PROVÁVEL,app/api/auth/register/route.ts:6-29,--,Rate limit in-memory apenas
+ASVS-V6-4,Authentication,ASVS 5.0,V6.4.1,Sim,Auth/Recovery,Não,NÃO TESTADO,lib/auth.ts,--,Password reset não implementado no código
+ASVS-V6-5,Authentication,ASVS 5.0,V6.5.1,Sim,Auth/Step-up,Não,NÃO TESTADO,lib/auth.ts,--,Step-up auth não implementado
+ASVS-V7-1,Session Management,ASVS 5.0,V7.1.1,Sim,Session/JWT,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:45-47; jwt callback,--,JWT com role/id; HttpOnly, Secure, SameSite=Lax
+ASVS-V6-2,Session Management,ASVS 5.0,V7.2.1,Sim,Session/Rotation,Não,HIPÓTESE,lib/auth.ts,--,Refresh token rotation não implementado
+ASVS-V6-3,Session Management,ASVS 5.0,V7.3.1,Sim,Session/Timeout,Não,HIPÓTESE,lib/auth.ts,--,JWT exp/default; idle/absolute timeout não configurado
+ASVS-V6-4,Session Management,ASVS 5.0,V7.4.1,Sim,Session/Fixation,Não,NÃO TESTADO,lib/auth.ts,--,Session fixation não testado
+ASVS-V6-5,Session Management,ASVS 5.0,V7.5.1,Sim,Session/Logout,Análise estática,Não,CONTROLE VALIDADO,components/Header.tsx:16-18,--,signOut com callbackUrl; token invalidation
+ASVS-V8-1,Authorization,ASVS 5.0,V8.1.1,Sim,Authorization/RBAC,Análise estática,Não,CONTROLE VALIDADO,middleware.ts:9-16,--,Middleware role check para /admin
+ASVS-V8-2,Authorization,ASVS 5.0,V8.2.1,Sim,Authorization/Object,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:176-179,--,VIEWER vê apenas suas inscrições
+ASVS-V8-3,Authorization,ASVS 5.0,V8.3.1,Sim,Authorization/Admin,Análise estática,Não,CONTROLE VALIDADO,middleware.ts:10-16; app/api/admin/*,--,ADMIN required para /admin/*
+ASVS-V8-4,Authorization,ASVS 5.0,V8.3.2,Sim,Authorization/Admin Actions,Análise estática,Não,CONTROLE VALIDADO,app/api/admin/inscricoes/route.ts:107-109,--,PATCH requer ADMIN role
+ASVS-V9-1,Self-contained Tokens,ASVS 5.0,V9.1.1,Sim,JWT Tokens,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:45-47,--,JWT HS256 com role/id; validação assinatura
+ASVS-V9-2,Self-contained Tokens,ASVS 5.0,V9.2.1,Sim,JWT/Validation,Análise estática,Não,HIPÓTESE,lib/auth.ts,--,Issuer/audience validation não explícita
+ASVS-V10-1,OAuth and OIDC,ASVS 5.0,V10.1.1,Não,OAuth,OAuth,N/A,N/A,--,Credentials provider apenas
+ASVS-V11-1,Cryptography,ASVS 5.0,V11.1.1,Sim,Crypto/Password,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:28; app/api/auth/register/route.ts:100,--,bcrypt cost 12
+ASVS-V11-2,Cryptography,ASVS 5.0,V11.2.1,Sim,Crypto/JWT,Análise estática,Não,CONTROLE VALIDADO,lib/auth.ts:45-47,--,JWT HS256; assinatura validada
+ASVS-V11-3,Cryptography,ASVS 5.0,V11.3.1,Sim,Crypto/TLS,Não,HIPÓTESE,next.config.mjs,--,TLS em produção (Vercel) assumido
+ASVS-V12-1,Secure Communication,ASVS 5.0,V12.1.1,Sim,Headers/HTTPS,Análise estática,Não,PROVÁVEL,next.config.mjs:9-21,--,Headers básicos; HSTS presente; CSP incompleto
+ASVS-V12-2,Secure Communication,ASVS 5.0,V12.2.1,Sim,Headers/HSTS,Análise estática,Não,CONTROLE VALIDADO,next.config.mjs:19-20,--,HSTS: max-age=63072000; includeSubDomains; preload
+ASVS-V13-1,Configuration,ASVS 5.0,V13.1.1,Sim,Config/Debug,Análise estática,Não,CONTROLE VALIDADO,next.config.mjs,--,Debug desabilitado; production build
+ASVS-V13-2,Configuration,ASVS 5.0,V13.2.1,Sim,Config/Secrets,Não,HIPÓTESE,.env; lib/prisma.ts,--,.env não versionado; sem secret manager
+ASVS-V14-1,Data Protection,ASVS 5.0,V14.1.1,Sim,PII/CPF,Análise estática,Não,CONTROLE VALIDADO,lib/cpf.ts; app/api/inscricoes/route.ts,--,CPF validation + duplicate check
+ASVS-V14-2,Data Protection,ASVS 5.0,V14.2.1,Sim,PII/Storage,Não,HIPÓTESE,prisma/schema.prisma,--,Dados em PostgreSQL; criptografia em repouso assumida
+ASVS-V14-3,Data Protection,ASVS 5.0,V14.3.1,Sim,PII/Logs,Não,PROVÁVEL,lib/logger.ts,--,Logger estruturado; PII em logs não verificado
+ASVS-V15-1,Secure Coding,ASVS 5.0,V15.1.1,Sim,Code/Prisma,Análise estática,Não,CONTROLE VALIDADO,lib/prisma.ts; prisma/schema,--,Prisma prepared statements; sem raw SQL
+ASVS-V15-2,Secure Coding,ASVS 5.0,V15.2.1,Sim,Code/Dependencies,Análise estática,Não,HIPÓTESE,package.json; package-lock.json,--,Lockfile presente; Trivy não executado
+ASVS-V16-1,Logging/Errors,ASVS 5.0,V16.1.1,Sim,Logging/Error,Análise estática,Não,PROVÁVEL,lib/logger.ts; app/api/*/route.ts,--,Logger estruturado; error handling centralizado
+ASVS-V16-2,Logging/Errors,ASVS 5.0,V16.2.1,Sim,Error Handling,Análise estática,Não,CONTROLE VALIDADO,app/api/*/route.ts:159-164,--,Error handling consistente; stack traces não vazados
+ASVS-V16-3,Logging/Errors,ASVS 5.0,V16.3.1,Sim,Error/Info Disclosure,Análise estática,Não,CONTROLE VALIDADO,app/api/*/route.ts:161,--,Stack traces não vazados ao cliente
+ASVS-V17-1,WebRTC,ASVS 5.0,V17.1.1,Não,WebRTC,N/A,N/A,--,N/A
+
+OWASP-A01,Broken Access Control,OWASP Top 10:2025,A01,Sim,Authorization,Análise estática,Não,CONTROLE VALIDADO,middleware.ts; app/api/*,--,RBAC robusto; cross-tenant protection
+OWASP-A02,Security Misconfiguration,OWASP Top 10:2025,A02,Sim,Config/Headers,Análise estática,Não,PROVÁVEL,next.config.mjs,--,CSP incompleto; headers básicos apenas
+OWASP-A03,Supply Chain Failures,OWASP Top 10:2025,A03,Sim,Dependencies,Análise estática,Não,HIPÓTESE,package.json; package-lock.json,--,Trivy não executado; GHSA-69fq-xp46-6x23 não verificado
+OWASP-A04,Cryptographic Failures,OWASP Top 10:2025,A04,Sim,Crypto/HTTPS,Análise estática,Não,HIPÓTESE,next.config.mjs; lib/auth.ts,--,TLS produção assumido; bcrypt cost 12
+OWASP-A05,Injection,OWASP Top 10:2025,A05,Sim,Injection/SQL,Análise estática,Não,CONTROLE VALIDADO,lib/prisma.ts; prisma/schema,--,Prisma prepared statements; sem raw SQL
+OWASP-A06,Insecure Design,OWASP Top 10:2025,A06,Sim,Design/AuthZ,Análise estática,Não,CONTROLE VALIDADO,middleware.ts; app/api/*,--,RBAC bem desenhado; deny-by-default
+OWASP-A07,Authentication Failures,OWASP Top 10:2025,A07,Sim,Auth/Session,Análise estática,Não,PROVÁVEL,lib/auth.ts; rate limit,--,Rate limit in-memory; MFA não obrigatório
+OWASP-A08,Integrity Failures,OWASP Top 10:2025,A08,Sim,Supply Chain,Análise estática,Não,HIPÓTESE,package.json; package-lock.json,--,SBOM não gerado; Trivy não executado
+OWASP-A09,Logging Failures,OWASP Top 10:2025,A09,Sim,Logging/Monitoring,Análise estática,Não,PROVÁVEL,lib/logger.ts,--,Logs básicos; sem SIEM/alertas
+OWASP-A10,Exceptional Conditions,OWASP Top 10:2025,A10,Sim,Error Handling,Análise estática,Não,CONTROLE VALIDADO,app/api/*/route.ts,--,Error handling consistente; stack traces não vazados
+
+API1,BOLA,OWASP API 2023,API1,Sim,API/BOLA,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts:176-179,--,VIEWER vê apenas suas inscrições
+API2,Broken Authentication,OWASP API 2023,API2,Sim,Auth/JWT,Análise estática,Não,PROVÁVEL,lib/auth.ts; rate limit,--,Rate limit in-memory; JWT forte
+API3,Broken Object Property Level Authorization,OWASP API 2023,API3,Sim,API/Mass Assignment,Análise estática,Não,CONTROLE VALIDADO,app/api/cultura/[id]/route.ts:54-62,--,Allowed fields allowlist
+API4,Unrestricted Resource Consumption,OWASP API 2023,API4,Sim,API/Rate Limit,Análise estática,Não,PROVÁVEL,app/api/auth/register/route.ts:6-29,--,Rate limit in-memory
+API5,Broken Function Level Authorization,OWASP API 2023,API5,Sim,API/RBAC,Análise estática,Não,CONTROLE VALIDADO,app/api/admin/*/route.ts,--,Role checks consistentes
+API6,Unrestricted Access to Sensitive Business Flows,OWASP API 2023,API6,Sim,API/Business Logic,Análise estática,Não,CONTROLE VALIDADO,app/api/inscricoes/route.ts,--,Duplicate check; status validation
+API7,SSRF,OWASP API 2023,API7,Sim,SSRF/Egress,Não,NÃO TESTADO,app/api/*,--,SSRF/Egress não identificado no código
+API8,Security Misconfiguration,OWASP API 2023,API8,Sim,API/Config,Análise estática,Não,PROVÁVEL,next.config.mjs,--,CSP incompleto
+API9,Improper Inventory Management,OWASP API 2023,API9,Sim,API/Inventory,Não,HIPÓTESE,app/api/*,--,OpenAPI/Swagger em /docs
+API10,Unsafe Consumption of APIs,OWASP API 2023,API10,Sim,API/Third-party,Não,NÃO TESTADO,lib/*,--,Integrações terceiras não identificadas

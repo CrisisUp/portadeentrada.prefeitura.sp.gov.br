@@ -1,0 +1,74 @@
+@import './animations.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #4054b2;
+  --color-primary-hover: #334499;
+  --color-dark: #1a1a1a;
+
+  /* Light theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
+  --text-primary: #1a1a1a;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+
+  /* Toast */
+  --toast-bg: #ffffff;
+  --toast-border: #e5e5e5;
+  --toast-color: #1a1a1a;
+
+  /* Skeleton shimmer */
+  --shimmer-1: #f0f0f0;
+  --shimmer-2: #e0e0e0;
+}
+
+.dark {
+  /* Dark theme */
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --bg-tertiary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-primary: #374151;
+  --border-secondary: #4b5563;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+
+  /* Toast */
+  --toast-bg: #1f2937;
+  --toast-border: #374151;
+  --toast-color: #f9fafb;
+
+  /* Skeleton shimmer */
+  --shimmer-1: #374151;
+  --shimmer-2: #4b5563;
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

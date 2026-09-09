@@ -1,0 +1,49 @@
+version: 2
+updates:
+  # npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/portadeentrada"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "CrisisUp"
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      production:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
+      dev:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+    # Security-only for major versions
+    - package-ecosystem: "npm"
+      dependency-type: "production"
+      update-types: ["security"]
+      labels:
+        - "security"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "ci"
+    reviewers:
+      - "CrisisUp"
+
+  # Docker (if added later)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "docker"
+    open-pull-requests-limit: 5
