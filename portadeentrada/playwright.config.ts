@@ -7,6 +7,13 @@ const webServerCommand = process.env.CI
   ? 'npm run build && npm run start'
   : 'npm run dev'
 
+// Use PostgreSQL database for E2E (not the SQLite test database)
+const e2eEnv = {
+  DATABASE_URL: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/portadeentrada',
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'test-secret-min-32-chars-long-for-testing-only',
+  NEXTAUTH_URL: 'http://localhost:3000',
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -35,5 +42,6 @@ export default defineConfig({
     url: baseURL,
     reuseExistingServer: !process.env.CI, // Always reuse locally, fresh in CI
     timeout: process.env.CI ? 120000 : 300000,
+    env: e2eEnv,
   },
 })

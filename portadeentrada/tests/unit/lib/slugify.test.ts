@@ -1,59 +1,91 @@
 import { describe, it, expect } from 'vitest'
-import { slugify, programaSlug } from '@/lib/slugify'
+import { slugify, generateUniqueSlug, programaSlug } from '@/lib/slugify'
 
-describe('Slugify Utilities', () => {
+describe('lib/slugify', () => {
   describe('slugify', () => {
-    it('converts to lowercase', () => {
-      expect(slugify('HELLO WORLD')).toBe('hello-world')
-      expect(slugify('Hello World')).toBe('hello-world')
+    it('converte para lowercase', () => {
+      expect(slugify('TEXTO')).toBe('texto')
+      expect(slugify('Texto')).toBe('texto')
     })
 
-    it('removes accents', () => {
+    it('remove acentos', () => {
+      expect(slugify('café')).toBe('cafe')
       expect(slugify('São Paulo')).toBe('sao-paulo')
-      expect(slugify('Fomento à Cultura')).toBe('fomento-a-cultura')
-      expect(slugify('Programação Cultural')).toBe('programacao-cultural')
-      expect(slugify('Formação')).toBe('formacao')
-      expect(slugify('Virada Cultural')).toBe('virada-cultural')
+      expect(slugify('ação')).toBe('acao')
+      expect(slugify('útil')).toBe('util')
     })
 
-    it('replaces non-alphanumeric with hyphens', () => {
-      expect(slugify('Hello, World!')).toBe('hello-world')
-      expect(slugify('Test@#$%')).toBe('test')
-      expect(slugify('A&B')).toBe('a-b')
+    it('substitui espaços e caracteres especiais por hífen', () => {
+      expect(slugify('hello world')).toBe('hello-world')
+      expect(slugify('hello@world')).toBe('hello-world')
+      expect(slugify('hello#world$')).toBe('hello-world')
     })
 
-    it('collapses multiple hyphens', () => {
-      expect(slugify('Hello---World')).toBe('hello-world')
-      expect(slugify('A  B  C')).toBe('a-b-c')
+    it('colapsa múltiplos hífens em um', () => {
+      expect(slugify('hello   world')).toBe('hello-world')
+      expect(slugify('hello---world')).toBe('hello-world')
     })
 
-    it('trims hyphens from start and end', () => {
+    it('remove hífens no início e fim', () => {
       expect(slugify('-hello')).toBe('hello')
       expect(slugify('hello-')).toBe('hello')
       expect(slugify('-hello-')).toBe('hello')
-      expect(slugify('---')).toBe('')
     })
 
-    it('handles empty string', () => {
+    it('mantém números', () => {
+      expect(slugify('teste123')).toBe('teste123')
+      expect(slugify('123')).toBe('123')
+    })
+
+    it('remove caracteres especiais diversos', () => {
+      expect(slugify('Olá, Mundo!')).toBe('ola-mundo')
+      expect(slugify('Teste (com) parênteses')).toBe('teste-com-parenteses')
+      expect(slugify('A&B')).toBe('a-b')
+    })
+
+    it('retorna string vazia para input vazio', () => {
       expect(slugify('')).toBe('')
+      expect(slugify('   ')).toBe('')
+      expect(slugify('!!!')).toBe('')
     })
 
-    it('handles numbers', () => {
-      expect(slugify('Programa 2026')).toBe('programa-2026')
-      expect(slugify('Edital 123')).toBe('edital-123')
+    it('trata strings complexas', () => {
+      expect(slugify('Fomento à Cultura 2024')).toBe('fomento-a-cultura-2024')
+      expect(slugify('PROGRAMA DE INICIAÇÃO ARTÍSTICA')).toBe('programa-de-iniciacao-artistica')
+    })
+  })
+
+  describe('generateUniqueSlug', () => {
+    it('retorna baseSlug se não existe', () => {
+      const existing: string[] = []
+      expect(generateUniqueSlug('meu-programa', existing)).toBe('meu-programa')
+    })
+
+    it('adiciona sufixo se baseSlug existe', () => {
+      const existing = ['meu-programa']
+      expect(generateUniqueSlug('meu-programa', existing)).toBe('meu-programa-1')
+    })
+
+    it('incrementa contador se múltiplos existem', () => {
+      const existing = ['meu-programa', 'meu-programa-1', 'meu-programa-2']
+      expect(generateUniqueSlug('meu-programa', existing)).toBe('meu-programa-3')
+    })
+
+    it('não conflita com slugs similares', () => {
+      const existing = ['meu-programa', 'meu-programa-outro']
+      expect(generateUniqueSlug('meu-programa', existing)).toBe('meu-programa-1')
     })
   })
 
   describe('programaSlug', () => {
-    it('prepends slash', () => {
+    it('gera slug com barra inicial', () => {
       expect(programaSlug('Fomento à Cultura')).toBe('/fomento-a-cultura')
-      expect(programaSlug('PROMAC')).toBe('/promac')
-      expect(programaSlug('Virada Cultural')).toBe('/virada-cultural')
+      expect(programaSlug('Teste Programa')).toBe('/teste-programa')
     })
 
-    it('works with complex titles', () => {
-      expect(programaSlug('Editais para Oficinas')).toBe('/editais-para-oficinas')
-      expect(programaSlug('Programação Cultural')).toBe('/programacao-cultural')
+    it('aplica todas as regras do slugify', () => {
+      expect(programaSlug('Olá, Mundo!')).toBe('/ola-mundo')
+      expect(programaSlug('  Espaços  ')).toBe('/espacos')
     })
   })
 })

@@ -5,7 +5,7 @@ interface CardProps {
   className?: string
 }
 
-export default function Card({ children, variant = 'default', hover = false, className = '' }: CardProps) {
+export default function Card({ children, variant = 'default', hover = false, className = '', ...props }: CardProps) {
   const baseClasses = 'bg-surface rounded-xl p-6 transition-all duration-200'
 
   const variantClasses = {
@@ -17,7 +17,7 @@ export default function Card({ children, variant = 'default', hover = false, cla
   const hoverClasses = hover ? 'hover-lift cursor-pointer' : ''
 
   return (
-    <div className={`${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`}>
+    <div data-testid="card" className={`${baseClasses} ${variantClasses[variant]} ${hoverClasses} ${className}`} {...props}>
       {children}
     </div>
   )

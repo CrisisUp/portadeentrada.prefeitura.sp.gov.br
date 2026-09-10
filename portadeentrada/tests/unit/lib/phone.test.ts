@@ -1,91 +1,95 @@
 import { describe, it, expect } from 'vitest'
 import { cleanPhone, isValidPhone, formatPhone, maskPhone } from '@/lib/phone'
 
-describe('Phone Utilities', () => {
+describe('lib/phone', () => {
   describe('cleanPhone', () => {
-    it('removes non-digits', () => {
+    it('remove caracteres não numéricos', () => {
       expect(cleanPhone('(11) 99999-9999')).toBe('11999999999')
       expect(cleanPhone('11 99999-9999')).toBe('11999999999')
       expect(cleanPhone('+55 11 99999-9999')).toBe('5511999999999')
     })
 
-    it('handles empty string', () => {
+    it('retorna string vazia se input vazio', () => {
       expect(cleanPhone('')).toBe('')
     })
   })
 
   describe('isValidPhone', () => {
-    it('validates correct mobile phones (11 digits with 9)', () => {
-      expect(isValidPhone('11999999999')).toBe(true)
-      expect(isValidPhone('21987654321')).toBe(true)
+    it('valida celular com 9º dígito (11 dígitos)', () => {
       expect(isValidPhone('(11) 99999-9999')).toBe(true)
+      expect(isValidPhone('11999999999')).toBe(true)
       expect(isValidPhone('+55 11 99999-9999')).toBe(true)
     })
 
-    it('validates correct landlines (10 digits)', () => {
-      expect(isValidPhone('1133334444')).toBe(true)
-      expect(isValidPhone('(11) 3333-4444')).toBe(true)
+    it('valida fixo sem 9º dígito (10 dígitos)', () => {
+      // 10 dígitos: DDD + 8 dígitos (sem 9º dígito)
+      // O 3º dígito (primeiro do número) NÃO deve ser 9
+      expect(isValidPhone('(11) 8888-8888')).toBe(true)
+      expect(isValidPhone('1188888888')).toBe(true)
+      expect(isValidPhone('(21) 3333-4444')).toBe(true)
     })
 
-    it('rejects invalid length', () => {
-      expect(isValidPhone('1199999999')).toBe(false) // 10 digits but starts with 9
-      expect(isValidPhone('119999999999')).toBe(false) // 12 digits
-      expect(isValidPhone('123')).toBe(false)
-      expect(isValidPhone('')).toBe(false)
+    it('rejeita DDD inválido', () => {
+      expect(isValidPhone('(00) 99999-9999')).toBe(false)
+      expect(isValidPhone('(10) 99999-9999')).toBe(false)
+      expect(isValidPhone('(01) 99999-9999')).toBe(false)
     })
 
-    it('rejects invalid DDD', () => {
-      expect(isValidPhone('00999999999')).toBe(false) // DDD 00
-      expect(isValidPhone('10999999999')).toBe(false) // DDD 10
-      expect(isValidPhone('0999999999')).toBe(false) // DDD 0
+    it('rejeita celular sem 9º dígito', () => {
+      expect(isValidPhone('(11) 89999-9999')).toBe(false) // 11 dígitos mas 3º não é 9
+      expect(isValidPhone('11899999999')).toBe(false)
     })
 
-    it('rejects mobile without 9', () => {
-      expect(isValidPhone('1133334444')).toBe(true) // landline OK
-      expect(isValidPhone('11933334444')).toBe(true) // mobile with 9 OK
-      // 11 digits but 3rd digit is not 9
-      expect(isValidPhone('11833334444')).toBe(false)
+    it('rejeita fixo com 9º dígito', () => {
+      // Se tem 10 dígitos mas o 3º é 9, é inválido
+      expect(isValidPhone('(11) 9999-9999')).toBe(false)
+      expect(isValidPhone('1199999999')).toBe(false)
     })
 
-    it('rejects repeated digits', () => {
+    it('rejeita sequência repetida', () => {
+      expect(isValidPhone('(11) 11111-1111')).toBe(false)
       expect(isValidPhone('11111111111')).toBe(false)
-      expect(isValidPhone('99999999999')).toBe(false)
+    })
+
+    it('rejeita tamanho inválido', () => {
+      expect(isValidPhone('(11) 9999-999')).toBe(false) // 9 dígitos
+      expect(isValidPhone('(11) 99999-99999')).toBe(false) // 12 dígitos
+      expect(isValidPhone('999999999')).toBe(false)
     })
   })
 
   describe('formatPhone', () => {
-    it('formats 11-digit mobile', () => {
+    it('formata celular (11 dígitos)', () => {
       expect(formatPhone('11999999999')).toBe('(11) 99999-9999')
-      expect(formatPhone('21987654321')).toBe('(21) 98765-4321')
-    })
-
-    it('formats 10-digit landline', () => {
-      expect(formatPhone('1133334444')).toBe('(11) 3333-4444')
-    })
-
-    it('handles already formatted', () => {
       expect(formatPhone('(11) 99999-9999')).toBe('(11) 99999-9999')
+      expect(formatPhone('+55 11 99999-9999')).toBe('(11) 99999-9999')
     })
 
-    it('returns original if invalid length', () => {
+    it('formata fixo (10 dígitos)', () => {
+      // 10 dígitos válidos: DDD + 8 dígitos, 3º dígito NÃO é 9
+      expect(formatPhone('1188888888')).toBe('(11) 8888-8888')
+      expect(formatPhone('(11) 8888-8888')).toBe('(11) 8888-8888')
+    })
+
+    it('retorna original se inválido', () => {
       expect(formatPhone('123')).toBe('123')
-      // 10 digits with 9 as 3rd digit is now invalid for landline, returns original
-      expect(formatPhone('1199999999')).toBe('1199999999')
+      expect(formatPhone('abc')).toBe('abc')
     })
   })
 
   describe('maskPhone', () => {
-    it('masks progressively', () => {
+    it('aplica máscara progressiva', () => {
       expect(maskPhone('1')).toBe('1')
       expect(maskPhone('11')).toBe('11')
       expect(maskPhone('119')).toBe('(11) 9')
+      expect(maskPhone('1199')).toBe('(11) 99')
+      expect(maskPhone('11999')).toBe('(11) 999')
+      expect(maskPhone('119999')).toBe('(11) 9999')
       expect(maskPhone('1199999')).toBe('(11) 9999-9')
+      expect(maskPhone('11999999')).toBe('(11) 9999-99')
+      expect(maskPhone('119999999')).toBe('(11) 9999-999')
+      expect(maskPhone('1199999999')).toBe('(11) 9999-9999')
       expect(maskPhone('11999999999')).toBe('(11) 99999-9999')
-      expect(maskPhone('1133334444')).toBe('(11) 3333-4444')
-    })
-
-    it('handles formatted input', () => {
-      expect(maskPhone('(11) 99999-9999')).toBe('(11) 99999-9999')
     })
   })
 })

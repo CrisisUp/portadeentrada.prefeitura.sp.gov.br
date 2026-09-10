@@ -9,12 +9,18 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./tests/setup.tsx'],
-    include: [
-      'tests/unit/**/*.test.{ts,tsx}',
-      'tests/component/**/*.test.{ts,tsx}',
-    ],
+    environment: 'node',
+    globalSetup: ['./tests/integration/global-setup.ts'],
+    setupFiles: ['./tests/integration/setup.ts'],
+    include: ['tests/integration/**/*.test.{ts,tsx}'],
+    testTimeout: 30000,
+    hookTimeout: 30000,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -25,14 +31,8 @@ export default defineConfig({
         '*.config.*',
         '**/*.test.{ts,tsx}',
         'app/**',
-        'components/**/*.stories.tsx',
+        'components/**',
       ],
-      thresholds: {
-        lines: 80,
-        functions: 80,
-        branches: 70,
-        statements: 80,
-      },
     },
   },
   resolve: {

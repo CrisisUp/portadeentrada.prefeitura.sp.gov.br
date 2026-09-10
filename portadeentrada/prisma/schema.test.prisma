@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String               @id @default(cuid())
+  name              String
+  email             String               @unique
+  emailVerified     DateTime?
+  passwordHash      String
+  role              Role                 @default(VIEWER)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum StatusPrograma {
+  aberto
+  em_andamento
+  encerrado
+}
+
+enum StatusInscricao {
+  pendente
+  aprovada
+  rejeitada
+}
+
+model ProgramaCultural {
+  id          String         @id @default(cuid())
+  titulo      String
+  descricao   String
+  categoria   String
+  status      StatusPrograma @default(aberto)
+  dataInicio  DateTime?
+  dataFim     DateTime?
+  slug        String?        @unique
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
+  inscricoes  Inscricao[]
+
+  @@index([status])
+  @@index([categoria])
+  @@index([slug])
+}
+
+model Inscricao {
+  id                String           @id @default(cuid())
+  programaId        String
+  programa          ProgramaCultural @relation(fields: [programaId], references: [id], onDelete: Cascade)
+  nomeCompleto      String
+  email             String
+  telefone          String?
+  cpf               String
+  rg                String?
+  endereco          String?
+  cidade            String?
+  estado            String?
+  cep               String?
+  portfolioUrl      String?
+  cartaIntencao     String?
+  status            StatusInscricao  @default(pendente)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+
+  @@index([programaId])
+  @@index([programaId, status])
+  @@index([email])
+  @@index([status])
+  @@index([cpf])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
