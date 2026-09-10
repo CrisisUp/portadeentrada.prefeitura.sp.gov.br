@@ -22,9 +22,9 @@ describe('Skeleton Components', () => {
   describe('CardSkeleton', () => {
     it('renderiza estrutura de card com título, descrição e badge', () => {
       render(<CardSkeleton />)
-      // Get the first skeleton's parent (the card container)
+      // Get the card container (parent of the first skeleton's parent)
       const skeletons = screen.getAllByTestId('skeleton')
-      const container = skeletons[0].parentElement
+      const container = skeletons[0].parentElement!.parentElement
       expect(container).toHaveClass('bg-surface')
       expect(container).toHaveClass('rounded-xl')
       expect(container).toHaveClass('shadow-sm')
@@ -78,16 +78,21 @@ describe('Skeleton Components', () => {
   describe('StatsSkeleton', () => {
     it('renderiza grid 4 colunas com cards', () => {
       render(<StatsSkeleton />)
-      // Find the grid container
+      // The grid is the root element returned by StatsSkeleton, which contains 4 cards
+      // Each card has 2 skeletons (value + label), so 8 skeletons total
       const skeletons = screen.getAllByTestId('skeleton')
-      const container = skeletons[0].parentElement!.parentElement!.parentElement
-      expect(container).toHaveClass('grid')
-      expect(container).toHaveClass('grid-cols-2')
-      expect(container).toHaveClass('md:grid-cols-4')
-      expect(container).toHaveClass('gap-4')
+      expect(skeletons.length).toBe(8)
 
-      // 4 cards
-      const cards = container!.querySelectorAll('[class*="bg-surface"]')
+      // The grid container is the parent of the first card
+      const grid = skeletons[0].parentElement!.parentElement
+      expect(grid).toHaveClass('grid')
+      expect(grid).toHaveClass('grid-cols-2')
+      expect(grid).toHaveClass('md:grid-cols-4')
+      expect(grid).toHaveClass('gap-4')
+
+      // 4 cards - each card has class "bg-surface" (not bg-surface-muted which is on skeletons)
+      // Use exact class match to avoid matching bg-surface-muted
+      const cards = grid!.querySelectorAll('div.bg-surface.rounded-xl.shadow-sm.p-6')
       expect(cards.length).toBe(4)
     })
   })

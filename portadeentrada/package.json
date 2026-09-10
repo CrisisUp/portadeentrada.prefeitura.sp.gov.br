@@ -14,6 +14,8 @@
     "test:integration": "vitest run -c vitest.integration.config.ts",
     "test:integration:watch": "vitest -c vitest.integration.config.ts",
     "test:integration:coverage": "vitest run -c vitest.integration.config.ts --coverage",
+    "test:component": "vitest run -c vitest.config.ts --testNamePattern=component",
+    "test:all": "npm run test:integration && npm run test:component && npm run test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:seed": "cross-env SEED_ADMIN_PASSWORD=e2e-test-2026 SEED_EDITOR_PASSWORD=e2e-test-2026 SEED_VIEWER_PASSWORD=e2e-test-2026 npx ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" prisma/seed.ts",
     "test:e2e:full": "npm run test:e2e:seed && cross-env E2E_ADMIN_PASSWORD=e2e-test-2026 npm run test:e2e",

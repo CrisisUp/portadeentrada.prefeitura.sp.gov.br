@@ -1,0 +1,61 @@
+# docker-compose.dev.yml - Desenvolvimento com Hot Reload
+# Uso: docker-compose -f docker-compose.dev.yml up -d
+
+services:
+  # PostgreSQL Database (Desenvolvimento)
+  postgres:
+    image: postgres:16-alpine
+    container_name: portadeentrada-postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: portadeentrada
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portadeentrada"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - portadeentrada-dev-network
+    restart: unless-stopped
+
+  # Next.js Application (Desenvolvimento com Hot Reload)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: portadeentrada-app-dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portadeentrada
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-dev-secret-change-in-production}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}
+      SEED_EDITOR_PASSWORD: ${SEED_EDITOR_PASSWORD:-admin123}
+      SEED_VIEWER_PASSWORD: ${SEED_VIEWER_PASSWORD:-admin123}
+      WATCHPACK_POLLING: "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - portadeentrada-dev-network
+    restart: unless-stopped
+    command: npm run dev
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  portadeentrada-dev-network:
+    driver: bridge

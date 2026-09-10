@@ -1,71 +1,272 @@
-name: CI
+# .github/workflows/ci.yml - CI/CD Pipeline com Docker
+# Este workflow roda em push/PR para main e faz build + testes
+
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, develop]
   pull_request:
-    branches: [main, master]
+    branches: [main, develop]
+  workflow_dispatch:
 
-permissions:
-  contents: read
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # =============================================================================
+  # LINT & TYPE CHECK
+  # =============================================================================
   lint:
-    name: Lint
+    name: Lint & Type Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: portadeentrada/package-lock.json
-      - run: cd portadeentrada && npm ci
-      - run: cd portadeentrada && npm run lint
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '22'
           cache: 'npm'
-          cache-dependency-path: portadeentrada/package-lock.json
-      - run: cd portadeentrada && npm ci
-      - run: cd portadeentrada && npx prisma generate
-      - run: cd portadeentrada && npm run build
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+  # =============================================================================
+  # UNIT & INTEGRATION TESTS
+  # =============================================================================
+  test-unit-integration:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: portadeentrada_test
+        ports: 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d portadeentrada_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: unit,integration
+
+  # =============================================================================
+  # COMPONENT TESTS
+  # =============================================================================
+  test-component:
+    name: Component Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run component tests
+        run: npm run test:component
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage/lcov.info
+          flags: component
+
+  # =============================================================================
+  # E2E TESTS (Playwright)
+  # =============================================================================
+  test-e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: portadeentrada_test
+        ports: 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d portadeentrada_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+
+      - name: Build application
+        run: npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
           NEXTAUTH_SECRET: test-secret
           NEXTAUTH_URL: http://localhost:3000
 
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: portadeentrada/package-lock.json
-      - run: cd portadeentrada && npm ci
-      - run: cd portadeentrada && npx prisma generate
-      - run: cd portadeentrada && npm run test
-      - run: cd portadeentrada && npm run test:coverage
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
 
-  audit:
-    name: Dependency Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - name: Seed database
+        run: npm run db:seed
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+          SEED_ADMIN_PASSWORD: e2e-test-2026
+          SEED_EDITOR_PASSWORD: e2e-test-2026
+          SEED_VIEWER_PASSWORD: e2e-test-2026
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Start application
+        run: |
+          npm run start &
+          sleep 10
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/portadeentrada_test
+          NEXTAUTH_SECRET: test-secret
+          NEXTAUTH_URL: http://localhost:3000
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          E2E_ADMIN_PASSWORD: e2e-test-2026
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
         with:
-          node-version: 20
-          cache: 'npm'
-          cache-dependency-path: portadeentrada/package-lock.json
-      - run: cd portadeentrada && npm audit --audit-level=high
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # =============================================================================
+  # DOCKER BUILD & PUSH
+  # =============================================================================
+  docker-build:
+    name: Build & Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [lint, test-unit-integration, test-component, test-e2e]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =============================================================================
+  # DEPLOY (Exemplo - ajustar conforme infraestrutura)
+  # =============================================================================
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Deploy to server
+        run: |
+          echo "Deploy to production server..."
+          # Exemplo para VPS com docker-compose:
+          # ssh user@server "cd /opt/portadeentrada && docker-compose pull && docker-compose up -d"
+          # Ou usar Vercel, AWS ECS, Kubernetes, etc.
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}

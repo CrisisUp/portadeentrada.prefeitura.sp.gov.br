@@ -1,0 +1,52 @@
+# docker-compose.test.yml - Para rodar testes em CI/CD
+# Uso: docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+
+services:
+  # PostgreSQL para testes (usa schema SQLite para testes unit/integration, mas PostgreSQL para E2E)
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: portadeentrada-postgres-test
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: portadeentrada_test
+    tmpfs:
+      - /var/lib/postgresql/data  # Em memória para velocidade
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portadeentrada_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      - portadeentrada-test-network
+
+  # Runner de testes
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: portadeentrada-test-runner
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@postgres-test:5432/portadeentrada_test
+      NEXTAUTH_SECRET: test-secret-for-testing-only
+      NEXTAUTH_URL: http://localhost:3000
+      E2E_ADMIN_PASSWORD: e2e-test-2026
+      CI: "true"
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - portadeentrada-test-network
+    volumes:
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
+    # Comando padrão roda todos os testes
+    command: ["npm", "run", "test:all"]
+
+networks:
+  portadeentrada-test-network:
+    driver: bridge

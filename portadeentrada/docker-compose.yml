@@ -1,0 +1,60 @@
+# docker-compose.yml - Produção
+# Uso: docker-compose up -d
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: portadeentrada-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: portadeentrada
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portadeentrada"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - portadeentrada-network
+    restart: unless-stopped
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: portadeentrada-app
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/portadeentrada
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      # Seed passwords (opcional - sobrescrever em .env)
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin123}
+      SEED_EDITOR_PASSWORD: ${SEED_EDITOR_PASSWORD:-admin123}
+      SEED_VIEWER_PASSWORD: ${SEED_VIEWER_PASSWORD:-admin123}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - portadeentrada-network
+    restart: unless-stopped
+    # Para rodar migrações e seed na primeira vez:
+    # command: sh -c "npx prisma migrate deploy && npm run db:seed && node server.js"
+
+volumes:
+  postgres_data:
+
+networks:
+  portadeentrada-network:
+    driver: bridge
